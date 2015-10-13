@@ -13,7 +13,7 @@ struct ToDoItem: Equatable {
     
     var complete : Bool = false
     
-    let start = NSDate().dateByAddingTimeInterval(60*60)
+    let start = NSDate().dateByAddingTimeInterval(60*60*24)
     
     func isComplete() -> Bool {
         return complete

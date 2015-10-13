@@ -19,6 +19,11 @@ class ToDoListTableViewController: UITableViewController, MyProtocol {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: Selector("refresh"), forControlEvents: UIControlEvents.ValueChanged)
+        self.refreshControl = refreshControl
+        self.refreshControl?.tintColor = UIColor.whiteColor()
+        
         self.tasks = [] //userDefaults.objectForKey("tasks") as! [ToDoItem] // GET TASKS STORED SOMEWHERE or just empty
         if self.tasks.isEmpty {
 //            self.tasks.append(ToDoItem())
@@ -37,11 +42,11 @@ class ToDoListTableViewController: UITableViewController, MyProtocol {
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated);
         for task in self.tasks {
-            if task.isExpired() {
+            if task.isExpired() && task.isComplete() {
                 self.tasks.removeAtIndex(self.tasks.indexOf(task)!)
-                self.tableView.reloadData()
             }
         }
+        self.tableView.reloadData()
     }
     
     func setup() {
@@ -74,6 +79,11 @@ class ToDoListTableViewController: UITableViewController, MyProtocol {
             self.view.addSubview(label)
         }
 
+    }
+    
+    func refresh() {
+        self.tableView.reloadData()
+        refreshControl?.endRefreshing()
     }
     
     func addTasks() {
@@ -140,7 +150,15 @@ class ToDoListTableViewController: UITableViewController, MyProtocol {
         
         
         cell?.backgroundColor = UIColor.whiteColor()
-//        cell?.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
+        if task.isComplete() {
+            cell?.accessoryType = UITableViewCellAccessoryType.Checkmark
+            cell?.textLabel?.textColor = UIColor.blueColor()
+        } else {
+            cell?.accessoryType = UITableViewCellAccessoryType.None
+            cell?.textLabel?.textColor = UIColor.redColor()
+        }
+        
+//        cell?.textLabel?.textColor = UIColor.blackColor()
         return cell!
     }
     
@@ -159,7 +177,7 @@ class ToDoListTableViewController: UITableViewController, MyProtocol {
             self.tasks[indexPath.row].complete = true
             let text = self.tasks[indexPath.row].task as String?
             let cell = tableView.cellForRowAtIndexPath(indexPath)
-            cell?.textLabel?.text = "Complete - " + text!
+            cell?.textLabel?.text = "Completed - " + text!
             self.tasks[indexPath.row].complete = true
             UIView.animateWithDuration(2.0) {
                 tableView.cellForRowAtIndexPath(indexPath)?.accessoryType = UITableViewCellAccessoryType.Checkmark
@@ -174,8 +192,10 @@ class ToDoListTableViewController: UITableViewController, MyProtocol {
             UIView.animateWithDuration(2.0) {
                 tableView.cellForRowAtIndexPath(indexPath)?.accessoryType = UITableViewCellAccessoryType.None
                 
-            }        }
+            }
+        }
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
+        refresh()
     }
 
     // Override to support editing the table view.
@@ -183,7 +203,9 @@ class ToDoListTableViewController: UITableViewController, MyProtocol {
         if editingStyle == .Delete {
             // Delete the row from the data source
             tasks.removeAtIndex(indexPath.row)
+            tableView.cellForRowAtIndexPath(indexPath)?.accessoryType = UITableViewCellAccessoryType.None
             tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Fade)
+            
         } else if editingStyle == .Insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
         }    
@@ -239,10 +261,10 @@ class ToDoListTableViewController: UITableViewController, MyProtocol {
         if (self.tableView.separatorStyle == UITableViewCellSeparatorStyle.None) {
             self.tableView.separatorStyle = UITableViewCellSeparatorStyle.SingleLine
             self.label.text = ""
-            self.tableView.backgroundColor = UIColor.grayColor()
+            self.tableView.backgroundColor = UIColor.darkGrayColor()
         }
         tasks.append(item)
-        self.tableView.reloadData()
+        refresh()
     }
   
 
